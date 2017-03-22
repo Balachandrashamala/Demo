@@ -1,0 +1,225 @@
+[oracle@naidu ~]$ ps -ef|grep pmon
+oracle   10719  8756  0 09:19 pts/1    00:00:00 grep pmon
+
+
+[oracle@naidu ~]$ ps -ef|grep pmon
+oracle   10951     1  0 09:30 ?        00:00:00 ora_pmon_ipr01
+oracle   11114  8756  0 09:35 pts/1    00:00:00 grep pmon
+
+[oracle@naidu ~]$ cat /etc/oratab
+
+# This file is used by ORACLE utilities.  It is created by root.sh
+# and updated by the Database Configuration Assistant when creating
+# a database.
+
+# A colon, ':', is used as the field terminator.  A new line terminates
+# the entry.  Lines beginning with a pound sign, '#', are comments.
+#
+# Entries are of the form:
+#   $ORACLE_SID:$ORACLE_HOME:<N|Y>:
+#
+# The first and second fields are the system identifier and home
+# directory of the database respectively.  The third filed indicates
+# to the dbstart utility that the database should , "Y", or should not,
+# "N", be brought up at system boot time.
+#
+# Multiple entries with the same $ORACLE_SID are not allowed.
+#
+#
+ipr01:/v01/app/oracle/product/11.2.0/dbhome_1:N
+
+
+
+[oracle@naidu ~]$ . oraenv
+ORACLE_SID = [ipr01] ? ipr01
+The Oracle base for ORACLE_HOME=/v01/app/oracle/product/11.2.0/dbhome_1 is /v01/app/oracle
+[oracle@naidu ~]$ sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.1.0 Production on Mon Oct 24 09:16:33 2016
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+Connected to an idle instance.
+
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area  409194496 bytes
+Fixed Size                  2213856 bytes
+Variable Size             293603360 bytes
+Database Buffers          109051904 bytes
+Redo Buffers                4325376 bytes
+Database mounted.
+Database opened.
+
+SQL> select name,open_mode from v$database;
+
+NAME      OPEN_MODE
+--------- --------------------
+DPR01     READ WRITE
+
+SQL> select instance_name,status from v$instance;
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+ipr01            OPEN
+
+SQL> desc dba_tablespaces;
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ TABLESPACE_NAME                           NOT NULL VARCHAR2(30)
+ BLOCK_SIZE                                NOT NULL NUMBER
+ INITIAL_EXTENT                                     NUMBER
+ NEXT_EXTENT                                        NUMBER
+ MIN_EXTENTS                               NOT NULL NUMBER
+ MAX_EXTENTS                                        NUMBER
+ MAX_SIZE                                           NUMBER
+ PCT_INCREASE                                       NUMBER
+ MIN_EXTLEN                                         NUMBER
+ STATUS                                             VARCHAR2(9)
+ CONTENTS                                           VARCHAR2(9)
+ LOGGING                                            VARCHAR2(9)
+ FORCE_LOGGING                                      VARCHAR2(3)
+ EXTENT_MANAGEMENT                                  VARCHAR2(10)
+ ALLOCATION_TYPE                                    VARCHAR2(9)
+ PLUGGED_IN                                         VARCHAR2(3)
+ SEGMENT_SPACE_MANAGEMENT                           VARCHAR2(6)
+ DEF_TAB_COMPRESSION                                VARCHAR2(8)
+ RETENTION                                          VARCHAR2(11)
+ BIGFILE                                            VARCHAR2(3)
+ PREDICATE_EVALUATION                               VARCHAR2(7)
+ ENCRYPTED                                          VARCHAR2(3)
+ COMPRESS_FOR                                       VARCHAR2(12
+
+SQL> select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          ONLINE
+
+SQL> select file_name from dba_data_files;
+
+FILE_NAME
+--------------------------------------------------------------------------------
+/v01/app/oracle/oradata/dpr01/users01.dbf
+/v01/app/oracle/oradata/dpr01/undotbs01.dbf
+/v01/app/oracle/oradata/dpr01/sysaux01.dbf
+/v01/app/oracle/oradata/dpr01/system01.dbf
+
+SQL> create tablespace naidu datafile '/v01/app/oracle/oradata/dpr01/naidu01.dbf' size 10m;
+
+Tablespace created.
+
+SQL> select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          ONLINE
+NAIDU                          ONLINE
+
+6 rows selected.
+
+SQL> drop tablespace naidu including contents and datafiles;
+
+Tablespace dropped.
+
+SQL>  select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          ONLINE
+
+
+SQL> alter tablespace users offline;
+
+Tablespace altered.
+
+SQL> select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          OFFLINE
+
+SQL> alter tablespace users online; 
+
+Tablespace altered.
+
+SQL> select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          ONLINE
+
+SQL> alter tablespace users read only;
+
+Tablespace altered.
+
+SQL> select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          READ ONLY
+
+SQL> alter tablespace users read write;
+
+Tablespace altered.
+
+SQL> select tablespace_name, status from dba_tablespaces;
+
+TABLESPACE_NAME                STATUS
+------------------------------ ---------
+SYSTEM                         ONLINE
+SYSAUX                         ONLINE
+UNDOTBS1                       ONLINE
+TEMP                           ONLINE
+USERS                          ONLINE
+
+HOW TO FIND OUT THE CONTROL FILE
+
+SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
+/v01/app/oracle/oradata/dpr01/control01.ctl
+/v01/app/oracle/flash_recovery_area/dpr01/control02.ctl
+
+
+HOW TO FIND OUT THE LOG FILE
+
+SQL> select member from v$logfile;
+
+MEMBER
+--------------------------------------------------------------------------------
+/v01/app/oracle/oradata/dpr01/redo03.log
+/v01/app/oracle/oradata/dpr01/redo02.log
+/v01/app/oracle/oradata/dpr01/redo01.log
+
+
+
+
+
+
